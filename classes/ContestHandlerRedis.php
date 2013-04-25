@@ -98,8 +98,8 @@ class ContestHandlerRedis implements ContestHandler {
 			if ($userHistoryList != null) {
 				$userHistoryList->push($itemid);
 				//if we have userid, push it to the item history
-				//$itemHistory = new ItemHistory($itemid);
-				//$itemHistory->push($userid);
+				$itemHistory = new ItemHistory($itemid);
+				$itemHistory->push($userid);
 			}
 		}
 	}

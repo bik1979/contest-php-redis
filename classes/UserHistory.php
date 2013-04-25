@@ -45,6 +45,10 @@ class UserHistory {
 
 		$size = $redis->lpush($this->memkey, $id);
 
+		if ($size > 1) {
+			file_put_contents('plista.log', date('c') . "\n {$this->memkey} size:$size \n", FILE_APPEND);
+		}
+
 		if ($size > $this->number_of_items) {
 			$redis->ltrim($this->memkey, 0, $this->number_of_items - 1);
 		}
