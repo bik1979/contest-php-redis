@@ -42,7 +42,9 @@ class ItemHistory {
 		$redis = RedisHandler::getConnection();
 
 		$size = $redis->lpush($this->memkey, $id);
-
+        if ($size > 1) {
+            file_put_contents('plista.log', "\n". date('c') . " {$this->memkey} size:$size \n", FILE_APPEND);
+        }
 		if ($size > $this->number_of_users) {
 			$redis->ltrim($this->memkey, 0, $this->number_of_users - 1);
 		}
