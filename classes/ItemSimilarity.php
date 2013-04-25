@@ -28,7 +28,7 @@ class ItemSimilarity {
 	 */
 	protected $itemid = null;
 
-	const KEY = 'is:';
+	const KEY = 'isim:';
 
 
 	/**
@@ -46,7 +46,7 @@ class ItemSimilarity {
 	public function set($item1, $item2, $sim) {
 		$redis = RedisHandler::getConnection();
 		$memkey1 = static::KEY . $item1;
-		$is_new = $redis->zAdd($memkey1, $item2, $sim);
+		$is_new = $redis->zAdd($memkey1, $sim, $item2);
 
 		if ($is_new && $redis->zcard($memkey1) > $this->number_of_items) {
 			$redis->zremrangebyrank($memkey1, 0, -($this->number_of_items + 1));
@@ -54,7 +54,7 @@ class ItemSimilarity {
 		$redis->expire($memkey1, $this->ttl);
 
 		$memkey2 = static::KEY . $item2;
-		$is_new = $redis->zAdd($memkey2, $item1, $sim);
+		$is_new = $redis->zAdd($memkey2, $sim, $item1);
 
 		if ($is_new && $redis->zcard($memkey2) > $this->number_of_items) {
 			$redis->zremrangebyrank($memkey2, 0, -($this->number_of_items + 1));

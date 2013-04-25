@@ -135,6 +135,9 @@ class ContestHandlerRedis implements ContestHandler {
 				}
 				$similarity = count(array_intersect($users, $seen_users))
 					/ count(array_unique(array_merge($users, $seen_users)));
+				if ($similarity == 0) {
+					continue;
+				}
 				$simObj = new ItemSimilarity();
 				$simObj->set($itemid, $seen, round($similarity, 3));
 				$count++;
