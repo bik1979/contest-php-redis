@@ -8,7 +8,7 @@ class ContestFeedback extends ContestMessage {
 	private $source;
 	private $target;
 	private $category;
-	
+
 	public function __construct($data) {
 		parent::__construct($data);
 
@@ -80,10 +80,10 @@ class ContestFeedback extends ContestMessage {
 
 	public function __toArray() {
 		return array(
-			'client' => $this->client->id,
-			'domain' => $this->domain->id,
-			'source' => $this->source->id,
-			'target' => $this->target->id,
+			'client'   => $this->client->id,
+			'domain'   => $this->domain->id,
+			'source'   => $this->source->id,
+			'target'   => $this->target->id,
 			'category' => ($this->category == null ? 'null' : $this->category->id),
 		) + parent::__toArray();
 	}
@@ -114,12 +114,12 @@ class ContestFeedback extends ContestMessage {
 	public function getResponse() {
 		return self::createMessage('thanks');
 	}
-	
+
 	public function __get($name) {
 		if (!in_array($name, array('client', 'domain', 'source', 'target', 'category', 'team'))) {
 			return null;
 		}
-		
+
 		return parent::__get($name);
 	}
 

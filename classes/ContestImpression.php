@@ -4,7 +4,7 @@
  */
 class ContestImpression extends ContestMessage {
 	protected $logId;
-	
+
 	protected $client;
 	protected $domain;
 	protected $item;
@@ -72,7 +72,7 @@ class ContestImpression extends ContestMessage {
 		if (!isset($data->config)) {
 			throw new ContestException("no config data", 400);
 		}
-		
+
 		if (isset($data->config->team)) {
 			if (!is_numeric($data->config->team->id)) {
 				throw new ContestException('only numeric ids are allowed', 400);
@@ -98,15 +98,15 @@ class ContestImpression extends ContestMessage {
 
 	public function __toArray() {
 		return array(
-			'id' => $this->logId,
-			'client' => $this->client->id,
-			'domain' => $this->domain->id,
-			'recommend' => isset($this->recommend) && !empty($this->recommend) ? $this->recommend: 'null',
+			'id'            => $this->logId,
+			'client'        => $this->client->id,
+			'domain'        => $this->domain->id,
+			'recommend'     => isset($this->recommend) && !empty($this->recommend) ? $this->recommend : 'null',
 			'recommendable' => ($this->item == null ? 'null' : $this->item->recommendable),
-			'item' => ($this->item == null ? 'null' : $this->item->id),
-			'category' => ($this->category == null ? 'null' : $this->category->id),
-			'timeout' => $this->timeout,
-			'limit' => $this->limit,
+			'item'          => ($this->item == null ? 'null' : $this->item->id),
+			'category'      => ($this->category == null ? 'null' : $this->category->id),
+			'timeout'       => $this->timeout,
+			'limit'         => $this->limit,
 		) + parent::__toArray();
 	}
 
@@ -152,12 +152,12 @@ class ContestImpression extends ContestMessage {
 
 		return $resp;
 	}
-	
+
 	public function __get($name) {
 		if (!in_array($name, array('client', 'domain', 'item', 'category', 'timeout', 'recommend', 'limit', 'team'))) {
 			return null;
 		}
-		
+
 		return parent::__get($name);
 	}
 

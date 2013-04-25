@@ -11,7 +11,7 @@ class ItemHistory {
 	/**
 	 * @var int How big do we allow the list to get
 	 */
-	protected $number_of_users = 100;
+	protected $number_of_users = 500;
 
 	/**AbstractList
 	 * @var int how many seconds should the list live
@@ -24,16 +24,15 @@ class ItemHistory {
 	 */
 	protected $memkey = null;
 
-    const KEY = 'ih:%s';
+	const KEY = 'ih:%s';
 
 
-    /**
-     * @param string $itemid
-     */
-    public function __construct($itemid) {
-        $memkey = sprintf(static::KEY, $itemid);
-        parent::__construct($memkey);
-    }
+	/**
+	 * @param string $itemid
+	 */
+	public function __construct($itemid) {
+		$this->memkey = sprintf(static::KEY, $itemid);
+	}
 
 	/**
 	 * push userid to item history
@@ -61,7 +60,7 @@ class ItemHistory {
 
 		$users = $redis->lrange($this->memkey, 0, $limit - 1);
 
-        return array_unique($users);
+		return array_unique($users);
 	}
 
 }

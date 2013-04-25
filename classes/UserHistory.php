@@ -24,18 +24,17 @@ class UserHistory {
 	 */
 	protected $memkey = null;
 
-    const KEY = 'uh:%s:%s';
+	const KEY = 'uh:%s:%s';
 
 
-    /**
-     * a different list  per domain
-     * @param string $domainid
-     * @param string $userid
-     */
-    public function __construct($domainid, $userid) {
-        $memkey = sprintf(static::KEY, $userid, $domainid);
-        parent::__construct($memkey);
-    }
+	/**
+	 * a different list  per domain
+	 * @param string $domainid
+	 * @param string $userid
+	 */
+	public function __construct($domainid, $userid) {
+		$this->memkey = sprintf(static::KEY, $userid, $domainid);
+	}
 
 	/**
 	 * push item to user history
@@ -63,7 +62,7 @@ class UserHistory {
 
 		$items = $redis->lrange($this->memkey, 0, $limit - 1);
 
-        return array_unique($items);
+		return array_unique($items);
 	}
 
 }

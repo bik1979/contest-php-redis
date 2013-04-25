@@ -64,7 +64,7 @@ class ContestResult extends ContestMessage {
 		if (count($this->items) < 1) {
 			return null;
 		}
-		
+
 		$ret = '';
 
 		foreach ($this->items as $item) {

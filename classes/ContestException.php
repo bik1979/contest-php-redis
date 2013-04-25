@@ -8,16 +8,16 @@ class ContestException extends Exception {
 
 			$this->error = $message;
 		} else if ($message instanceof Exception) {
-			parent::__construct($message->getMessage() . ' Code: '. $message->getCode(), $code, $message);
+			parent::__construct($message->getMessage() . ' Code: ' . $message->getCode(), $code, $message);
 		} else {
 			parent::__construct($message, $code);
 		}
 	}
 
-    /**
-     * @return ContestError
-     */
-    public function getError() {
+	/**
+	 * @return ContestError
+	 */
+	public function getError() {
 		if ($this->error == null) {
 			$data = new stdClass;
 			$data->error = 'Exception: ' . $this->getMessage();

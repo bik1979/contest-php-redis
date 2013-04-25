@@ -5,9 +5,10 @@
 
 class ContestHandlerLIFO implements ContestHandler {
 	// holds the instance, singleton pattern
-    private static $instance;
+	private static $instance;
 
-	private function __construct() { }
+	private function __construct() {
+	}
 
 	public static function getInstance() {
 		if (self::$instance == null) {

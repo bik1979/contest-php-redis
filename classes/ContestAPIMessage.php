@@ -11,7 +11,7 @@ class ContestAPIMessage extends ContestMessage {
 		if (!isset($data->apikey)) {
 			throw new ContestException('api key missing', 400);
 		}
-		
+
 		$this->apikey = $data->apikey;
 	}
 
@@ -95,7 +95,7 @@ class ContestAPISync extends ContestAPIMessage {
 		$struct['apikey'] = $this->apikey;
 		$struct['startid'] = $this->startid;
 		$struct['version'] = self::VERSION;
-		
+
 		return plista_json_encode($struct);
 	}
 }
@@ -136,8 +136,9 @@ class ContestAPITrigger extends ContestAPIMessage {
 
 class ContestAPIResponse extends ContestAPIMessage {
 	// don't call parent constructor, since it expects an api key which we don't have.
-	public function __construct() { }
-	
+	public function __construct() {
+	}
+
 	public function __toString() {
 		return 'ok';
 	}

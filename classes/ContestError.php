@@ -18,7 +18,7 @@ class ContestError extends ContestMessage {
 		if (isset($data->code)) {
 			if (!is_numeric($data->code)) {
 				throw new ContestException('only numeric codes are allowed', 400);
-		}
+			}
 
 			$this->code = $data->code;
 		}
@@ -35,7 +35,7 @@ class ContestError extends ContestMessage {
 	public function __toArray() {
 		return array(
 			'message' => $this->getMessage(),
-			'code' => $this->getCode(),
+			'code'    => $this->getCode(),
 		) + parent::__toArray();
 	}
 
@@ -46,10 +46,10 @@ class ContestError extends ContestMessage {
 		}
 
 		return plista_json_encode(array(
-			'error' => $this->message,
-			'code' => $this->code,
+			'error'   => $this->message,
+			'code'    => $this->code,
 			'version' => self::VERSION,
-			'team' => (isset($_team) ? $_team : null)
+			'team'    => (isset($_team) ? $_team : null)
 		));
 	}
 
@@ -64,15 +64,19 @@ class ContestError extends ContestMessage {
 	public function postBack() {
 		if (!headers_sent()) {
 			switch ($this->code) {
-				case 400: $code_str = '400 Bad Request';
+				case 400:
+					$code_str = '400 Bad Request';
 					break;
-				case 401: $code_str = '401 Unauthorized';
+				case 401:
+					$code_str = '401 Unauthorized';
 					break;
-				case 500: $code_str = '500 Internal Server Error';
+				case 500:
+					$code_str = '500 Internal Server Error';
 					break;
-				default: $code_str = '200 OK';
+				default:
+					$code_str = '200 OK';
 					break;
-		}
+			}
 
 			header("HTTP/1.1 $code_str");
 		}

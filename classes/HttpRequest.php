@@ -47,7 +47,8 @@ class HttpRequest {
 	public function __destruct() {
 		try {
 			$this->disconnect();
-		} catch (Exception $e) { }
+		} catch (Exception $e) {
+		}
 	}
 
 	private function connect() {
@@ -101,14 +102,14 @@ class HttpRequest {
 		}
 
 		$contenttype = 'application/x-www-form-urlencoded';
-		
+
 		if (is_string($data)) {
 			$data = urlencode($data);
 		} else if (is_array($data)) {
 			$data = http_build_query($data);
 		} else if ($data instanceof ContestMessage) {
 			$data = plista_json_encode($data);
-			
+
 			$contenttype = 'application/json';
 		}
 
@@ -150,7 +151,7 @@ class HttpRequest {
 
 			return $resp;
 		}
-        return null;
+		return null;
 	}
 
 	public function get($path = null) {
@@ -306,11 +307,11 @@ class HttpRequest {
 		}
 
 		if ($this->transfer_chunked) {
-			 // we have already read the chunk size, so $msg contains the content
+			// we have already read the chunk size, so $msg contains the content
 			if ($this->expected_length > 0) {
 				// all we have to do is reset the flag
 				$this->expected_length = 0;
-			// beginning of content or we just read a line of content, so $msg contains a chunk size
+				// beginning of content or we just read a line of content, so $msg contains a chunk size
 			} else {
 				// strip away possible extensions and comments
 				if (mb_strpos($msg, ';') > 1) {
@@ -336,7 +337,8 @@ class HttpRequest {
 				try {
 					// it may theoretically also be an api message, so we test for that as well
 					$msg = ContestAPIMessage::fromJSON($msg);
-				} catch (ContestException $e) { }
+				} catch (ContestException $e) {
+				}
 			}
 		}
 
