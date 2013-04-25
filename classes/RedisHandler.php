@@ -25,7 +25,7 @@ class RedisHandler {
 			$host = 'localhost';
 			$port = 6379;
 			$redis->pconnect($host, $port, 5);
-			$redis->select($dbi);
+			//$redis->select($dbi);
 			static::$redis = $redis;
 		}
 		return static::$redis;
@@ -48,7 +48,7 @@ class RedisHandler {
 		$host = 'localhost';
 		$port = 6379;
 		$redis->pconnect($host, $port, 5);
-		$redis->select($dbi);
+		//$redis->select($dbi);
 		$redis->flushDB();
 		$redis->close();
 	}

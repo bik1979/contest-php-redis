@@ -56,8 +56,7 @@ class ItemSortedList {
 		// register impression
 		$item_count = $redis->zincrby($slot_key, 1, $id);
 		$slot_items_count = $redis->zcard($slot_key);
-
-		if ($slot_items_count == 1 && $item_count == 1) {
+                if ($slot_items_count == 1 && $item_count == 1) {
 			//this is first item inserted in this slot
 			$redis->expire($slot_key, $this->max_slots * $this->slot_size * 60 * 2); //hard ttl a bit longer
 			//limit the previous block to the top-k elements
