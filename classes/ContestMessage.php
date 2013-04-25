@@ -24,9 +24,9 @@ class ContestMessage {
 	public function __toArray() {
 		return array(
 			'timestamp' => intval($this->timestamp),
-			'team'      => (isset($this->team) ? $this->team->id : null),
-			'type'      => strtolower(substr(get_class($this), 7)),
-			'version'   => self::VERSION,
+			'team' => (isset($this->team) ? $this->team->id : null),
+			'type' => strtolower(substr(get_class($this), 7)),
+			'version' => self::VERSION,
 		);
 	}
 

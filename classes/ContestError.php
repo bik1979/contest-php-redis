@@ -35,7 +35,7 @@ class ContestError extends ContestMessage {
 	public function __toArray() {
 		return array(
 			'message' => $this->getMessage(),
-			'code'    => $this->getCode(),
+			'code' => $this->getCode(),
 		) + parent::__toArray();
 	}
 
@@ -46,10 +46,10 @@ class ContestError extends ContestMessage {
 		}
 
 		return plista_json_encode(array(
-			'error'   => $this->message,
-			'code'    => $this->code,
+			'error' => $this->message,
+			'code' => $this->code,
 			'version' => self::VERSION,
-			'team'    => (isset($_team) ? $_team : null)
+			'team' => (isset($_team) ? $_team : null)
 		));
 	}
 

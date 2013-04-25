@@ -98,15 +98,15 @@ class ContestImpression extends ContestMessage {
 
 	public function __toArray() {
 		return array(
-			'id'            => $this->logId,
-			'client'        => $this->client->id,
-			'domain'        => $this->domain->id,
-			'recommend'     => isset($this->recommend) && !empty($this->recommend) ? $this->recommend : 'null',
+			'id' => $this->logId,
+			'client' => $this->client->id,
+			'domain' => $this->domain->id,
+			'recommend' => isset($this->recommend) && !empty($this->recommend) ? $this->recommend : 'null',
 			'recommendable' => ($this->item == null ? 'null' : $this->item->recommendable),
-			'item'          => ($this->item == null ? 'null' : $this->item->id),
-			'category'      => ($this->category == null ? 'null' : $this->category->id),
-			'timeout'       => $this->timeout,
-			'limit'         => $this->limit,
+			'item' => ($this->item == null ? 'null' : $this->item->id),
+			'category' => ($this->category == null ? 'null' : $this->category->id),
+			'timeout' => $this->timeout,
+			'limit' => $this->limit,
 		) + parent::__toArray();
 	}
 

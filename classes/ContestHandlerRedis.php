@@ -96,27 +96,68 @@ class ContestHandlerRedis implements ContestHandler {
 		if ($recommendable && $itemid > 0) {
 			$itemPublisherList->push($itemid);
 			if ($userHistoryList != null) {
-				$userHistoryList->push($itemid);
+				$size = $userHistoryList->push($itemid);
+				if ($size > 10) {
+					file_put_contents('plista.log', "\n" . date('c') . " user $userid - $domainid:  history size:$size \n", FILE_APPEND);
+				}
 				//if we have userid, push it to the item history
 				$itemHistory = new ItemHistory($itemid);
-				$itemHistory->push($userid);
+				$size = $itemHistory->push($userid);
+				//if there's enough new data, try to find similar items
+				if (($size % 50) == 0) {
+					file_put_contents('plista.log', "\n" . date('c') . " item $itemid: history size:$size \n", FILE_APPEND);
+					$users_list = $itemHistory->get(200);
+					$this->findSimilarItems($itemid, $users_list, $domainid);
+				}
 			}
 		}
 	}
+
+	/**
+	 * @param $itemid
+	 * @param $users
+	 * @param $domainid
+	 */
+	protected function findSimilarItems($itemid, $users, $domainid) {
+		$t0 = time();
+		$count = 0;
+		foreach ($users as $userid) {
+			$userHistory = new UserHistory($domainid, $userid);
+			$items_seen = $userHistory->get(100);
+			if (empty($items_seen)) {
+				continue;
+			}
+			foreach ($items_seen as $seen) {
+				$seen_history = new ItemHistory($seen);
+				$seen_users = $seen_history->get(200);
+				if (empty($seen_users)) {
+					continue;
+				}
+				$similarity = count(array_intersect($users, $seen_users))
+					/ count(array_unique(array_merge($users, $seen_users)));
+				$simObj = new ItemSimilarity();
+				$simObj->set($itemid, $seen, round($similarity, 3));
+				$count++;
+			}
+		}
+		$t = time() - $t0;
+		file_put_contents('plista.log', "\n" . date('c') . " $count similar items found in $t seconds \n", FILE_APPEND);
+	}
+
 
 	/* This method handles feedback messages from the contest server. As of now it does nothing. It could be used to look at
 	 * the object ids in the feedback message and possibly add those to the data list as well.
 	 */
 	public function handleFeedback(ContestFeedback $feedback) {
-		if (!empty($feedback->source)) {
-			$itemid = $feedback->source->id;
-			// add id to data file
-		}
-
-		if (!empty($feedback->target)) {
-			$itemid = $feedback->target->id;
-			// add id to data file
-		}
+//		if (!empty($feedback->source)) {
+//			$itemid = $feedback->source->id;
+//			// add id to data file
+//		}
+//
+//		if (!empty($feedback->target)) {
+//			$itemid = $feedback->target->id;
+//			// add id to data file
+//		}
 	}
 
 	/* This is the handler method for error messages from the contest server. Implement your error handling code here.

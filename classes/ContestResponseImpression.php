@@ -14,9 +14,9 @@ class ContestResponseImpression extends ContestMessage {
 		}
 
 		return plista_json_encode(array(
-			'msg'     => 'processing',
+			'msg' => 'processing',
 			'version' => self::VERSION,
-			'team'    => (isset($_team) ? $_team : null)
+			'team' => (isset($_team) ? $_team : null)
 		));
 	}
 }

@@ -11,7 +11,7 @@ class ItemHistory {
 	/**
 	 * @var int How big do we allow the list to get
 	 */
-	protected $number_of_users = 500;
+	protected $number_of_users = 250;
 
 	/**AbstractList
 	 * @var int how many seconds should the list live
@@ -37,19 +37,22 @@ class ItemHistory {
 	/**
 	 * push userid to item history
 	 * @param string $id userid
+	 * @return int
 	 */
 	public function push($id) {
 		$redis = RedisHandler::getConnection();
 
 		$size = $redis->lpush($this->memkey, $id);
-        if ($size > 1) {
-            file_put_contents('plista.log', "\n". date('c') . " {$this->memkey} size:$size \n", FILE_APPEND);
-        }
+		if ($size > 1) {
+			file_put_contents('plista.log', "\n" . date('c') . " {$this->memkey} size:$size \n", FILE_APPEND);
+		}
 		if ($size > $this->number_of_users) {
-			$redis->ltrim($this->memkey, 0, $this->number_of_users - 1);
+			$redis->ltrim($this->memkey, 0, $this->number_of_users - 51);
 		}
 
 		$redis->expire($this->memkey, $this->ttl);
+
+		return $size;
 	}
 
 
