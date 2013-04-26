@@ -88,13 +88,16 @@ class ItemSimilarity {
 		//try to get similar items also from the items already seen by the user
 		$userHistory = new UserHistory($domainid, $userid);
 		$items_seen = $userHistory->get(10);
+		if (empty($items_seen)) {
+			return $redis->zRevRange($memkey, 0, $limit - 1);
+		}
 		$keys = array($memkey);
 		foreach ($items_seen as $seen) {
 			$keys[] = static::KEY . $seen;
 		}
 		$tmp_key = static::KEY . 'tmp:' . posix_getpid();
 		$redis->zUnion($tmp_key, $keys);
-		$similars = $redis->zRevRange($tmp_key, 0, $limit);
+		$similars = $redis->zRevRange($tmp_key, 0, $limit - 1);
 		$redis->del($tmp_key);
 		return $similars;
 	}

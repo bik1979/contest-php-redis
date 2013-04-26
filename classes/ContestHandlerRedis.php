@@ -179,7 +179,7 @@ class ContestHandlerRedis implements ContestHandler {
 	 * @param $domainid
 	 */
 	protected function findSimilarItems($itemid, $users, $domainid) {
-		$t0 = time();
+		$t0 = microtime(true);
 		$count = 0;
 		$processed_items = array();
 		$simObj = new ItemSimilarity();
@@ -214,7 +214,7 @@ class ContestHandlerRedis implements ContestHandler {
 		if ($count > 0) {
 			$simObj->refreshTtl($itemid);
 		}
-		$t = time() - $t0;
+		$t = round(microtime(true) - $t0, 3);
 		file_put_contents('plista.log', "\n" . date('c') . " $count similar items found in $t seconds \n", FILE_APPEND);
 	}
 

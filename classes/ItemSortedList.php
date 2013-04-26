@@ -107,7 +107,7 @@ class ItemSortedList {
 		$tmp_key = $this->memkey . ':tmp:' . posix_getpid();
 		$redis->zUnion($tmp_key, $slot_keys, $weights);
 //		$redis->expire($tmp_key, 60 * 15);
-		$list = $redis->zRevRange($tmp_key, 0, $limit);
+		$list = $redis->zRevRange($tmp_key, 0, $limit - 1);
 		$redis->del($tmp_key);
 		return $list;
 	}
