@@ -183,6 +183,7 @@ class ContestHandlerRedis implements ContestHandler {
 		foreach ($users as $userid) {
 			$userHistory = new UserHistory($domainid, $userid);
 			$items_seen = $userHistory->get(100);
+			$items_seen = array_diff($items_seen, array($itemid));
 			if (empty($items_seen)) {
 				continue;
 			}
