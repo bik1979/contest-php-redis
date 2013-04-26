@@ -180,6 +180,7 @@ class ContestHandlerRedis implements ContestHandler {
 	protected function findSimilarItems($itemid, $users, $domainid) {
 		$t0 = time();
 		$count = 0;
+		$processed_items = array();
 		foreach ($users as $userid) {
 			$userHistory = new UserHistory($domainid, $userid);
 			$items_seen = $userHistory->get(100);
@@ -187,7 +188,6 @@ class ContestHandlerRedis implements ContestHandler {
 			if (empty($items_seen)) {
 				continue;
 			}
-			$processed_items = array();
 			foreach ($items_seen as $seen) {
 				//dont calculate again if item has been already procesed
 				if (in_array($seen, $processed_items)) {
