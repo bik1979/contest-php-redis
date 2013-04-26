@@ -1,8 +1,9 @@
 <?php
-/* This is the reference implementation of a ContestHandler, which does nothing more than store the last items it sees
+
+/**
+ * This is the reference implementation of a ContestHandler, which does nothing more than store the last items it sees
  * (through impressions), and return them in reverse order.
  */
-
 class ContestHandlerRedis implements ContestHandler {
 	// holds the instance, singleton pattern
 	private static $instance;
@@ -10,6 +11,9 @@ class ContestHandlerRedis implements ContestHandler {
 	private function __construct() {
 	}
 
+	/**
+	 * @return ContestHandlerRedis
+	 */
 	public static function getInstance() {
 		if (self::$instance == null) {
 			self::$instance = new ContestHandlerRedis();
@@ -18,7 +22,8 @@ class ContestHandlerRedis implements ContestHandler {
 		return self::$instance;
 	}
 
-	/* This method handles received impressions. First it loads the data file, then checks whether the current item is
+	/**
+	 * This method handles received impressions. First it loads the data file, then checks whether the current item is
 	 * present in the data. If not, it prepends the new item id and writes the data file back. It then checks whether
 	 * it needs to generate a recommendation and if so takes object ids from the front of the data (excluding the new one)
 	 * and sends those back to the contest server.
@@ -38,7 +43,8 @@ class ContestHandlerRedis implements ContestHandler {
 
 		// check whether a recommendation is expected. if the flag is set to false, the current message is just a training message.
 		if ($impression->recommend) {
-			$candidates_list = $itemPublisherList->get(10 * $impression->limit);
+//			$candidates_list = $itemPublisherList->get(10 * $impression->limit);
+			$candidates_list = $this->recommend($itemid, $domainid, 10 * $impression->limit);
 			//don't return current item
 			$has_current_item = array_search($itemid, $candidates_list);
 			if ($has_current_item !== false) {
@@ -104,13 +110,63 @@ class ContestHandlerRedis implements ContestHandler {
 				$itemHistory = new ItemHistory($itemid);
 				$size = $itemHistory->push($userid);
 				//if there's enough new data, try to find similar items
-				if (($size % 50) == 0) {
+				if (($size % 20) == 0) {
 					file_put_contents('plista.log', "\n" . date('c') . " item $itemid: history size:$size \n", FILE_APPEND);
 					$users_list = $itemHistory->get(200);
 					$this->findSimilarItems($itemid, $users_list, $domainid);
 				}
 			}
 		}
+	}
+
+	/**
+	 * @param $itemid
+	 * @param $domainid
+	 * @param $limit
+	 * @return array
+	 */
+	protected function recommend($itemid, $domainid, $limit) {
+		//list of most popular items
+		$itemPublisherList = new ItemSortedList($domainid);
+		$popular_items = $itemPublisherList->get($limit);
+		//list of similar items
+		$simObj = new ItemSimilarity();
+		$similar_items = $simObj->getSimilar($itemid, $limit);
+
+		//return in first place similar and popular items
+		$recommendations = $similar_and_popular = array_intersect($popular_items, $similar_items);
+		$item_count = count($similar_and_popular);
+		file_put_contents('plista.log', "\n" . date('c') . "recommend: $item_count similar & popular items found \n", FILE_APPEND);
+		if ($item_count >= $limit) {
+			if ($item_count > $limit) {
+				$recommendations = array_slice($recommendations, 0, $limit);
+			}
+			return $recommendations;
+		}
+
+		//add similar but not popular
+		$similar_but_not_popular = array_diff($similar_items, $similar_and_popular);
+		$recommendations = array_merge($similar_and_popular, $similar_but_not_popular);
+		$item_count += count($similar_but_not_popular);
+		file_put_contents('plista.log', "\n" . date('c') . "recommend: $item_count similar items found \n", FILE_APPEND);
+		if ($item_count >= $limit) {
+			if ($item_count > $limit) {
+				$recommendations = array_slice($recommendations, 0, $limit);
+			}
+			return $recommendations;
+		}
+
+		//add popular but not similar
+		$popular_but_not_similar = array_diff($popular_items, $similar_and_popular);
+		$recommendations = array_merge($recommendations, $popular_but_not_similar);
+		$item_count += count($popular_but_not_similar);
+		if ($item_count >= $limit) {
+			if ($item_count > $limit) {
+				$recommendations = array_slice($recommendations, 0, $limit);
+			}
+		}
+		file_put_contents('plista.log', "\n" . date('c') . "recommend: $item_count items found \n", FILE_APPEND);
+		return $recommendations;
 	}
 
 	/**
