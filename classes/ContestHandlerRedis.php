@@ -187,7 +187,13 @@ class ContestHandlerRedis implements ContestHandler {
 			if (empty($items_seen)) {
 				continue;
 			}
+			$processed_items = array();
 			foreach ($items_seen as $seen) {
+				//dont calculate again if item has been already procesed
+				if (in_array($seen, $processed_items)) {
+					continue;
+				}
+				$processed_items[] = $seen;
 				$seen_history = new ItemHistory($seen);
 				$seen_users = $seen_history->get(200);
 				if (empty($seen_users)) {
