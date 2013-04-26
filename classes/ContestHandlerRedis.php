@@ -44,7 +44,7 @@ class ContestHandlerRedis implements ContestHandler {
 		// check whether a recommendation is expected. if the flag is set to false, the current message is just a training message.
 		if ($impression->recommend) {
 //			$candidates_list = $itemPublisherList->get(10 * $impression->limit);
-			$candidates_list = $this->recommend($itemid, $domainid, 10 * $impression->limit);
+			$candidates_list = $this->recommend($itemid, $domainid, 5 * $impression->limit);
 			//don't return current item
 			$has_current_item = array_search($itemid, $candidates_list);
 			if ($has_current_item !== false) {
@@ -52,7 +52,7 @@ class ContestHandlerRedis implements ContestHandler {
 			}
 			$items_seen = array();
 			if ($userHistoryList != null) {
-				$items_seen = $userHistoryList->get(15);
+				$items_seen = $userHistoryList->get(10);
 			}
 			$result_data = array();
 			$skipped = array();
@@ -136,7 +136,7 @@ class ContestHandlerRedis implements ContestHandler {
 		//return in first place similar and popular items
 		$recommendations = $similar_and_popular = array_intersect($popular_items, $similar_items);
 		$item_count = count($similar_and_popular);
-		file_put_contents('plista.log', "\n" . date('c') . "recommend: $item_count similar & popular items found \n", FILE_APPEND);
+		file_put_contents('plista.log', "\n" . date('c') . " recommend: $item_count similar & popular items found \n", FILE_APPEND);
 		if ($item_count >= $limit) {
 			if ($item_count > $limit) {
 				$recommendations = array_slice($recommendations, 0, $limit);
@@ -148,7 +148,7 @@ class ContestHandlerRedis implements ContestHandler {
 		$similar_but_not_popular = array_diff($similar_items, $similar_and_popular);
 		$recommendations = array_merge($similar_and_popular, $similar_but_not_popular);
 		$item_count += count($similar_but_not_popular);
-		file_put_contents('plista.log', "\n" . date('c') . "recommend: $item_count similar items found \n", FILE_APPEND);
+		file_put_contents('plista.log', "\n" . date('c') . " recommend: $item_count similar items found \n", FILE_APPEND);
 		if ($item_count >= $limit) {
 			if ($item_count > $limit) {
 				$recommendations = array_slice($recommendations, 0, $limit);
@@ -165,7 +165,7 @@ class ContestHandlerRedis implements ContestHandler {
 				$recommendations = array_slice($recommendations, 0, $limit);
 			}
 		}
-		file_put_contents('plista.log', "\n" . date('c') . "recommend: $item_count items found \n", FILE_APPEND);
+		file_put_contents('plista.log', "\n" . date('c') . " recommend: $item_count items found \n", FILE_APPEND);
 		return $recommendations;
 	}
 
