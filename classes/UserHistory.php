@@ -47,7 +47,7 @@ class UserHistory {
 		$size = $redis->lpush($this->memkey, $id);
 
 		if ($size > $this->number_of_items) {
-			$redis->ltrim($this->memkey, 0, $this->number_of_items - 1);
+			$redis->ltrim($this->memkey, 0, $this->number_of_items - 51);
 		}
 
 		$redis->expire($this->memkey, $this->ttl);
@@ -63,7 +63,7 @@ class UserHistory {
 	public function get($limit = 100) {
 		$redis = RedisHandler::getConnection();
 
-		$items = $redis->lrange($this->memkey, 0, $limit - 51);
+		$items = $redis->lrange($this->memkey, 0, $limit - 1);
 
 		return array_unique($items);
 	}

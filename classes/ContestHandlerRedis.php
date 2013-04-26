@@ -44,9 +44,9 @@ class ContestHandlerRedis implements ContestHandler {
 		// check whether a recommendation is expected. if the flag is set to false, the current message is just a training message.
 		if ($impression->recommend) {
 			if ($itemid == 0) {
-				$candidates_list = $itemPublisherList->get(5 * $impression->limit);
+				$candidates_list = $itemPublisherList->get(25);
 			} else {
-				$candidates_list = $this->recommend($itemid, $domainid, 5 * $impression->limit);
+				$candidates_list = $this->recommend($itemid, $domainid, 25);
 			}
 			//don't return current item
 			$has_current_item = array_search($itemid, $candidates_list);
