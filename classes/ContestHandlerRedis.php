@@ -46,7 +46,7 @@ class ContestHandlerRedis implements ContestHandler {
 			if ($itemid == 0) {
 				$candidates_list = $itemPublisherList->get(25);
 			} else {
-				$candidates_list = $this->recommend($itemid, $domainid, 25);
+				$candidates_list = $this->recommend($itemid, $domainid, $userid, 25);
 			}
 			//don't return current item
 			$has_current_item = array_search($itemid, $candidates_list);
@@ -125,16 +125,17 @@ class ContestHandlerRedis implements ContestHandler {
 	/**
 	 * @param $itemid
 	 * @param $domainid
+	 * @param $userid
 	 * @param $limit
 	 * @return array
 	 */
-	protected function recommend($itemid, $domainid, $limit) {
+	protected function recommend($itemid, $domainid, $userid, $limit) {
 		//list of most popular items
 		$itemPublisherList = new ItemSortedList($domainid);
 		$popular_items = $itemPublisherList->get($limit);
 		//list of similar items
 		$simObj = new ItemSimilarity();
-		$similar_items = $simObj->getSimilar($itemid, $limit);
+		$similar_items = $simObj->getSimilar($itemid, $domainid, $userid, $limit);
 
 		//return in first place similar and popular items
 		$recommendations = $similar_and_popular = array_intersect($popular_items, $similar_items);
@@ -181,6 +182,7 @@ class ContestHandlerRedis implements ContestHandler {
 		$t0 = time();
 		$count = 0;
 		$processed_items = array();
+		$simObj = new ItemSimilarity();
 		foreach ($users as $userid) {
 			$userHistory = new UserHistory($domainid, $userid);
 			$items_seen = $userHistory->get(100);
@@ -204,10 +206,13 @@ class ContestHandlerRedis implements ContestHandler {
 				if ($similarity == 0) {
 					continue;
 				}
-				$simObj = new ItemSimilarity();
+
 				$simObj->set($itemid, $seen, round($similarity, 3));
 				$count++;
 			}
+		}
+		if ($count > 0) {
+			$simObj->refreshTtl($itemid);
 		}
 		$t = time() - $t0;
 		file_put_contents('plista.log', "\n" . date('c') . " $count similar items found in $t seconds \n", FILE_APPEND);

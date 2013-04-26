@@ -51,7 +51,7 @@ class ItemSimilarity {
 		if ($is_new && $redis->zcard($memkey1) > $this->number_of_items) {
 			$redis->zremrangebyrank($memkey1, 0, -($this->number_of_items + 1));
 		}
-		$redis->expire($memkey1, $this->ttl);
+//		$redis->expire($memkey1, $this->ttl);
 
 		$memkey2 = static::KEY . $item2;
 		$is_new = $redis->zAdd($memkey2, $sim, $item1);
@@ -62,15 +62,40 @@ class ItemSimilarity {
 
 	}
 
+	/**
+	 * @param $itemid
+	 */
+	public function refreshTtl($itemid) {
+		$redis = RedisHandler::getConnection();
+		$memkey1 = static::KEY . $itemid;
+		$redis->expire($memkey1, $this->ttl);
+	}
+
 
 	/**
 	 * @param $itemid
+	 * @param $domainid
+	 * @param $userid
 	 * @param int $limit maximum number of entries to fetch
 	 * @return array id of the items
 	 */
-	public function getSimilar($itemid, $limit = 100) {
+	public function getSimilar($itemid, $domainid, $userid, $limit = 100) {
 		$redis = RedisHandler::getConnection();
 		$memkey = static::KEY . $itemid;
-		return $redis->zRevRange($memkey, 0, $limit - 1);
+		if ($userid == 0) {
+			return $redis->zRevRange($memkey, 0, $limit - 1);
+		}
+		//try to get similar items also from the items already seen by the user
+		$userHistory = new UserHistory($domainid, $userid);
+		$items_seen = $userHistory->get(10);
+		$keys = array($memkey);
+		foreach ($items_seen as $seen) {
+			$keys[] = static::KEY . $seen;
+		}
+		$tmp_key = static::KEY . 'tmp:' . posix_getpid();
+		$redis->zUnion($tmp_key, $keys);
+		$similars = $redis->zRevRange($tmp_key, 0, $limit);
+		$redis->del($tmp_key);
+		return $similars;
 	}
 }
