@@ -43,13 +43,9 @@ class ContestHandlerRedis implements ContestHandler {
 
 		// check whether a recommendation is expected. if the flag is set to false, the current message is just a training message.
 		if ($impression->recommend) {
-			//if ($itemid == 0) {
-				$candidates_list = $itemPublisherList->get(25);
-			//} else {
-			//	$candidates_list = $this->recommend($itemid, $domainid, $userid, 25);
-			//}
-			$item_count = count($candidates_list);
-			file_put_contents('plista.log', "\n" . date('c') . " recommend $userid $itemid $domainid: $item_count  items  \n", FILE_APPEND);
+			$candidates_list = $this->recommend($itemid, $domainid, $userid, 25);
+//			$item_count = count($candidates_list);
+//			file_put_contents('plista.log', "\n" . date('c') . " recommend $userid $itemid $domainid: $item_count  items  \n", FILE_APPEND);
 
 			//don't return current item
 			$has_current_item = array_search($itemid, $candidates_list);
@@ -144,6 +140,11 @@ class ContestHandlerRedis implements ContestHandler {
 		//list of most popular items
 		$itemPublisherList = new ItemSortedList($domainid);
 		$popular_items = $itemPublisherList->get($limit);
+		if (($itemid == 0 && $userid == 0) || $domainid == 1677) {
+			$item_count = count($popular_items);
+			file_put_contents('plista.log', "\n" . date('c') . " recommend $itemid $domainid $userid: $item_count popular items found \n", FILE_APPEND);
+			return $popular_items;
+		}
 		//list of similar items
 		$simObj = new ItemSimilarity();
 		$similar_items = $simObj->getSimilar($itemid, $domainid, $userid, $limit);
@@ -151,11 +152,11 @@ class ContestHandlerRedis implements ContestHandler {
 		//return in first place similar and popular items
 		$recommendations = $similar_and_popular = array_intersect($popular_items, $similar_items);
 		$item_count = count($similar_and_popular);
-		//file_put_contents('plista.log', "\n" . date('c') . " recommend $itemid $domainid: $item_count similar & popular items found \n", FILE_APPEND);
 		if ($item_count >= $limit) {
 			if ($item_count > $limit) {
 				$recommendations = array_slice($recommendations, 0, $limit);
 			}
+			file_put_contents('plista.log', "\n" . date('c') . " recommend $itemid $domainid $userid: $item_count similar & popular items found \n", FILE_APPEND);
 			return $recommendations;
 		}
 
@@ -163,11 +164,11 @@ class ContestHandlerRedis implements ContestHandler {
 		$similar_but_not_popular = array_diff($similar_items, $similar_and_popular);
 		$recommendations = array_merge($similar_and_popular, $similar_but_not_popular);
 		$item_count += count($similar_but_not_popular);
-		//file_put_contents('plista.log', "\n" . date('c') . " recommend $itemid $domainid: $item_count similar items found \n", FILE_APPEND);
 		if ($item_count >= $limit) {
 			if ($item_count > $limit) {
 				$recommendations = array_slice($recommendations, 0, $limit);
 			}
+			file_put_contents('plista.log', "\n" . date('c') . " recommend $itemid $domainid $userid: $item_count similar items found \n", FILE_APPEND);
 			return $recommendations;
 		}
 
@@ -180,7 +181,7 @@ class ContestHandlerRedis implements ContestHandler {
 				$recommendations = array_slice($recommendations, 0, $limit);
 			}
 		}
-		//file_put_contents('plista.log', "\n" . date('c') . " recommend $itemid $domainid: $item_count items found \n", FILE_APPEND);
+		file_put_contents('plista.log', "\n" . date('c') . " recommend $itemid $domainid $userid: $item_count popular items found \n", FILE_APPEND);
 		return $recommendations;
 	}
 

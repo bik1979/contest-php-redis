@@ -83,20 +83,29 @@ class ItemSimilarity {
 	public function getSimilar($itemid, $domainid, $userid, $limit = 100) {
 		$redis = RedisHandler::getConnection();
 		$memkey = static::KEY . $itemid;
-		if ($userid == 0) {
-			return $redis->zRevRange($memkey, 0, $limit - 1);
-		}
+		
+		$items_seen = array();
 		//try to get similar items also from the items already seen by the user
-		$userHistory = new UserHistory($domainid, $userid);
-		$items_seen = $userHistory->get(5);
+		if ($userid > 0) {
+			$userHistory = new UserHistory($domainid, $userid);
+			$items_seen = $userHistory->get(3);
+		}
 		if (empty($items_seen)) {
+			if ($itemid == 0) {
+				//no recommendations possible without history and current item
+				return array();
+			}
+			//similar items to current item, no history
 			return $redis->zRevRange($memkey, 0, $limit - 1);
 		}
-		$keys = array($memkey);
+		$keys = array();
+		if ($itemid > 0) {
+			$keys[] = $memkey;
+		}
 		foreach ($items_seen as $seen) {
 			$keys[] = static::KEY . $seen;
 		}
-		$tmp_key = static::KEY . 'tmp:' . posix_getpid();
+		$tmp_key = static::KEY . "$domainid:$itemid:$userid";
 		$redis->zUnion($tmp_key, $keys);
 		$similars = $redis->zRevRange($tmp_key, 0, $limit - 1);
 		$redis->del($tmp_key);

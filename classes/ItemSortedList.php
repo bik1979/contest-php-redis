@@ -103,10 +103,8 @@ class ItemSortedList {
 			$slot_keys[] = $this->memkey . ':t';
 			$weights[] = $sum_weight;
 		}
-		//file_put_contents('plista.log', date('c') . " keys " . print_r($slot_keys, true) ."\n", FILE_APPEND);
-		$tmp_key = $this->memkey . ':tmp:' . posix_getpid();
+		$tmp_key = $this->memkey . ':tmp:' . mt_rand(0,9999);
 		$redis->zUnion($tmp_key, $slot_keys, $weights);
-//		$redis->expire($tmp_key, 60 * 15);
 		$list = $redis->zRevRange($tmp_key, 0, $limit - 1);
 		$redis->del($tmp_key);
 		return $list;
