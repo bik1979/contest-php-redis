@@ -153,11 +153,11 @@ class ContestHandlerRedis implements ContestHandler {
 		//return in first place similar and popular items
 		$recommendations = $similar_and_popular = array_intersect($popular_items, $similar_items);
 		$item_count = count($similar_and_popular);
+		file_put_contents('plista.log', "\n" . date('c') . "1. recommend $itemid $domainid $userid: $item_count similar & popular items found \n", FILE_APPEND);
 		if ($item_count >= $limit) {
 			if ($item_count > $limit) {
 				$recommendations = array_slice($recommendations, 0, $limit);
 			}
-			file_put_contents('plista.log', "\n" . date('c') . "1. recommend $itemid $domainid $userid: $item_count similar & popular items found \n", FILE_APPEND);
 			return $recommendations;
 		}
 
@@ -165,11 +165,11 @@ class ContestHandlerRedis implements ContestHandler {
 		$similar_but_not_popular = array_diff($similar_items, $similar_and_popular);
 		$recommendations = array_merge($similar_and_popular, $similar_but_not_popular);
 		$item_count += count($similar_but_not_popular);
+		file_put_contents('plista.log', "\n" . date('c') . "2. recommend $itemid $domainid $userid: $item_count similar items found \n", FILE_APPEND);
 		if ($item_count >= $limit) {
 			if ($item_count > $limit) {
 				$recommendations = array_slice($recommendations, 0, $limit);
 			}
-			file_put_contents('plista.log', "\n" . date('c') . "2. recommend $itemid $domainid $userid: $item_count similar items found \n", FILE_APPEND);
 			return $recommendations;
 		}
 
