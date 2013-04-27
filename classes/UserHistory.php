@@ -47,7 +47,7 @@ class UserHistory {
 		$size = $redis->lpush($this->memkey, $id);
 
 		if ($size > $this->number_of_items) {
-			$redis->ltrim($this->memkey, 0, $this->number_of_items - 26);
+			$redis->ltrim($this->memkey, 0, $this->number_of_items - 10);
 		}
 
 		$redis->expire($this->memkey, $this->ttl);
