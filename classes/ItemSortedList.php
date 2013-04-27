@@ -87,7 +87,7 @@ class ItemSortedList {
 	 * @param float $sum_weight
 	 * @return array
 	 */
-	public function get($limit = 100, array $weights = array(), $sum_weight = 0.15) {
+	public function get($limit = 100, array $weights = array(), $sum_weight = 0.05) {
 		$redis = RedisHandler::getConnection();
 		if (empty($weights)) {
 			$weights = array(1, 0.75, 0.25);

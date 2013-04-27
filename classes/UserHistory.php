@@ -11,7 +11,7 @@ class UserHistory {
 	/**
 	 * @var int How big do we allow the list to get
 	 */
-	protected $number_of_items = 150;
+	protected $number_of_items = 50;
 
 	/**AbstractList
 	 * @var int how many seconds should the list live
@@ -47,7 +47,7 @@ class UserHistory {
 		$size = $redis->lpush($this->memkey, $id);
 
 		if ($size > $this->number_of_items) {
-			$redis->ltrim($this->memkey, 0, $this->number_of_items - 51);
+			$redis->ltrim($this->memkey, 0, $this->number_of_items - 26);
 		}
 
 		$redis->expire($this->memkey, $this->ttl);

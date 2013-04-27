@@ -87,7 +87,7 @@ class ItemSimilarity {
 		}
 		//try to get similar items also from the items already seen by the user
 		$userHistory = new UserHistory($domainid, $userid);
-		$items_seen = $userHistory->get(10);
+		$items_seen = $userHistory->get(5);
 		if (empty($items_seen)) {
 			return $redis->zRevRange($memkey, 0, $limit - 1);
 		}
