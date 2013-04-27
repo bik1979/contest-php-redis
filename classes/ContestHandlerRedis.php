@@ -109,7 +109,8 @@ class ContestHandlerRedis implements ContestHandler {
 		}
 		if ($recommendable === null && $domainid == 1677 && $itemid > 0) {
 			file_put_contents('plista.log', "\n" . date('c') . " invalid item? recommendable not set? \n" . $impression . "\n", FILE_APPEND);
-		} else if ( $recommendable && $itemid > 0) {
+		}
+		if (( ($recommendable === null && $domainid != 1677) || $recommendable === true) && $itemid > 0) {
 			$itemPublisherList->push($itemid);
 			if ($userHistoryList != null) {
 				$size = $userHistoryList->push($itemid);
