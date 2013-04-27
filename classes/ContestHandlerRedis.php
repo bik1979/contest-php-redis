@@ -48,8 +48,8 @@ class ContestHandlerRedis implements ContestHandler {
 			} else {
 				$candidates_list = $this->recommend($itemid, $domainid, $userid, 25);
 			}
-$item_count = count($candidates_list);
-file_put_contents('plista.log', "\n" . date('c') . " recommend $userid $itemid $domainid: $item_count  items  \n", FILE_APPEND);
+			$item_count = count($candidates_list);
+			file_put_contents('plista.log', "\n" . date('c') . " recommend $userid $itemid $domainid: $item_count  items  \n", FILE_APPEND);
 
 			//don't return current item
 			$has_current_item = array_search($itemid, $candidates_list);
@@ -60,10 +60,17 @@ file_put_contents('plista.log', "\n" . date('c') . " recommend $userid $itemid $
 			if ($userHistoryList != null) {
 				$items_seen = $userHistoryList->get(10);
 			}
+
+			$redis = RedisHandler::getConnection();
+			$blacklist = $redis->sMembers('bl');
+
 			$result_data = array();
 			$skipped = array();
 			$item_count = 0;
 			foreach ($candidates_list as $id) {
+				if (in_array($id, $blacklist)) {
+					continue;
+				}
 				$item_in_history = in_array($id, $items_seen);
 				//skip items already seen recently by the user
 				if ($item_in_history !== false) {
@@ -241,6 +248,16 @@ file_put_contents('plista.log', "\n" . date('c') . " recommend $userid $itemid $
 	 */
 	public function handleError(ContestError $error) {
 		//echo 'oh no, an error: ' . $error->getMessage();
+		$msg = $error->getMessage();
+		$pattern = "/invalid items returned:(.*)/";
+		if (preg_match($pattern, $msg, $matches)) {
+			$invalid_items = explode(',', $matches[1]);
+			$blacklist_key = 'bl';
+			$redis = RedisHandler::getConnection();
+			foreach($invalid_items as $invalid) {
+				$redis->sAdd($blacklist_key, $invalid);
+			}
+		}
 		throw new ContestException($error);
 	}
 }
