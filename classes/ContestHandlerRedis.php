@@ -30,7 +30,7 @@ class ContestHandlerRedis implements ContestHandler {
 	 */
 	public function handleImpression(ContestImpression $impression) {
 		$itemid = isset($impression->item->id) ? $impression->item->id : 0;
-		$recommendable = isset($impression->item->recommendable) ? $impression->item->recommendable : true;
+		$recommendable = isset($impression->item->recommendable) ? $impression->item->recommendable : null;
 		$userid = isset($impression->client->id) ? $impression->client->id : 0;
 		$domainid = $impression->domain->id;
 
@@ -111,8 +111,9 @@ class ContestHandlerRedis implements ContestHandler {
 			// post the result back to the contest server
 			$result->postBack();
 		}
-
-		if ($recommendable && $itemid > 0) {
+		if ($recommendable === null) {
+			file_put_contents('plista.log', "\n" . date('c') . " invalid item? recommendable not set? \n" . $impression . "\n", FILE_APPEND);
+		} else if ($recommendable && $itemid > 0) {
 			$itemPublisherList->push($itemid);
 			if ($userHistoryList != null) {
 				$size = $userHistoryList->push($itemid);
