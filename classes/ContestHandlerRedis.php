@@ -43,11 +43,11 @@ class ContestHandlerRedis implements ContestHandler {
 
 		// check whether a recommendation is expected. if the flag is set to false, the current message is just a training message.
 		if ($impression->recommend) {
-			if ($itemid == 0) {
+			//if ($itemid == 0) {
 				$candidates_list = $itemPublisherList->get(25);
-			} else {
-				$candidates_list = $this->recommend($itemid, $domainid, $userid, 25);
-			}
+			//} else {
+			//	$candidates_list = $this->recommend($itemid, $domainid, $userid, 25);
+			//}
 			$item_count = count($candidates_list);
 			file_put_contents('plista.log', "\n" . date('c') . " recommend $userid $itemid $domainid: $item_count  items  \n", FILE_APPEND);
 
@@ -111,9 +111,9 @@ class ContestHandlerRedis implements ContestHandler {
 			// post the result back to the contest server
 			$result->postBack();
 		}
-		if ($recommendable === null) {
+		if ($recommendable === null && $domainid == 1677 && $itemid > 0) {
 			file_put_contents('plista.log', "\n" . date('c') . " invalid item? recommendable not set? \n" . $impression . "\n", FILE_APPEND);
-		} else if ($recommendable && $itemid > 0) {
+		} else if ( $recommendable && $itemid > 0) {
 			$itemPublisherList->push($itemid);
 			if ($userHistoryList != null) {
 				$size = $userHistoryList->push($itemid);
