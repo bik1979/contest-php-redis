@@ -11,7 +11,7 @@ class UserHistory {
 	/**
 	 * @var int How big do we allow the list to get
 	 */
-	protected $number_of_items = 50;
+	protected $number_of_items = 100;
 
 	/**AbstractList
 	 * @var int how many seconds should the list live
