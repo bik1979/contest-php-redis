@@ -239,7 +239,7 @@ class ContestHandlerRedis implements ContestHandler {
 	 * the object ids in the feedback message and possibly add those to the data list as well.
 	 */
 	public function handleFeedback(ContestFeedback $feedback) {
-		file_put_contents('feedback.log', date('c') . " Message: $feedback \n", FILE_APPEND);
+		file_put_contents('feedback.log', date('c') . " Message: {$feedback->__toJSON()} \n", FILE_APPEND);
 //		if (!empty($feedback->source)) {
 //			$itemid = $feedback->source->id;
 //			// add id to data file
