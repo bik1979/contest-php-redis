@@ -45,7 +45,7 @@ class ContestHandlerRedis implements ContestHandler {
 		if ($impression->recommend) {
 //			$candidates_list = $this->recommend($itemid, $domainid, $userid, 25);
 			$candidates_list = $this->recommend(0, $domainid, 0, 25);
-
+			shuffle($candidates_list);
 			//don't return current item
 			$has_current_item = array_search($itemid, $candidates_list);
 			if ($has_current_item !== false) {
@@ -64,12 +64,14 @@ class ContestHandlerRedis implements ContestHandler {
 			$item_count = 0;
 			foreach ($candidates_list as $id) {
 				if (in_array($id, $blacklist)) {
+					file_put_contents('plista.log', "\n" . date('c') . "  $id: invalid item recommended  \n", FILE_APPEND);
 					continue;
 				}
 				$item_in_history = in_array($id, $items_seen);
 				//skip items already seen recently by the user
 				if ($item_in_history !== false) {
 					$skipped[] = $id;
+					file_put_contents('plista.log', "\n" . date('c') . "  $id: item already seen for user $userid \n", FILE_APPEND);
 					continue;
 				}
 				$data_object = new stdClass;
@@ -143,7 +145,7 @@ class ContestHandlerRedis implements ContestHandler {
 		$popular_items = $itemPublisherList->get($limit);
 		if (($itemid == 0 && $userid == 0)) { // || $domainid == 1677) {
 			$item_count = count($popular_items);
-			file_put_contents('plista.log', "\n" . date('c') . " 0. recommend $itemid $domainid $userid: $item_count popular items found \n", FILE_APPEND);
+//			file_put_contents('plista.log', "\n" . date('c') . " 0. recommend $itemid $domainid $userid: $item_count popular items found \n", FILE_APPEND);
 			return $popular_items;
 		}
 		//list of similar items
