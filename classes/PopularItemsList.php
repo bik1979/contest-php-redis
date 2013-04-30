@@ -71,6 +71,7 @@ class PopularItemsList {
 				$last_slot_key = $this->memkey . ':' . $last_slot;
 				//decay 66% cumulated total before adding last slot
 				$redis->zUnion($sum_slot_key, array($sum_slot_key, $last_slot_key), array(0.666, 1));
+				$redis->zRemRangeByScore($sum_slot_key, '-inf', 0.01);
 				$redis->zremrangebyrank($sum_slot_key, 0, -(3 * $this->limit + 1));
 				$redis->expire($sum_slot_key, $this->max_slots * $this->slot_size * 60 * 3); //hard ttl a bit longer
 
