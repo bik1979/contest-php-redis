@@ -65,14 +65,14 @@ class ContestHandlerRedis implements ContestHandler {
 			$item_count = 0;
 			foreach ($candidates_list as $id) {
 				if (in_array($id, $blacklist)) {
-					file_put_contents('plista.log', "\n" . date('c') . "  $id: invalid item recommended  \n", FILE_APPEND);
+					file_put_contents('plista.log', "\n" . date('c') . "  $id: invalid item filtered \n", FILE_APPEND);
 					continue;
 				}
 				$item_in_history = in_array($id, $items_seen);
 				//skip items already seen recently by the user
 				if ($item_in_history !== false) {
 					$skipped[] = $id;
-					file_put_contents('plista.log', "\n" . date('c') . "  $id: item already seen for user $userid \n", FILE_APPEND);
+					file_put_contents('plista.log', "\n" . date('c') . "  $id: skip item already seen for user $userid \n", FILE_APPEND);
 					continue;
 				}
 				$data_object = new stdClass;
@@ -239,7 +239,7 @@ class ContestHandlerRedis implements ContestHandler {
 	 * the object ids in the feedback message and possibly add those to the data list as well.
 	 */
 	public function handleFeedback(ContestFeedback $feedback) {
-		file_put_contents('plista.log', date('c') . " Message: $feedback \n", FILE_APPEND);
+		file_put_contents('feedback.log', date('c') . " Message: $feedback \n", FILE_APPEND);
 //		if (!empty($feedback->source)) {
 //			$itemid = $feedback->source->id;
 //			// add id to data file
