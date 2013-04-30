@@ -239,15 +239,19 @@ class ContestHandlerRedis implements ContestHandler {
 	 * the object ids in the feedback message and possibly add those to the data list as well.
 	 */
 	public function handleFeedback(ContestFeedback $feedback) {
+		file_put_contents('plista.log', date('c') . " Message: $feedback \n", FILE_APPEND);
 //		if (!empty($feedback->source)) {
 //			$itemid = $feedback->source->id;
 //			// add id to data file
 //		}
 //
-//		if (!empty($feedback->target)) {
-//			$itemid = $feedback->target->id;
-//			// add id to data file
-//		}
+		if (!empty($feedback->target)) {
+			$itemid = $feedback->target->id;
+			$clickskey = 'clicks:' . $feedback->domain->id;
+			$redis = RedisHandler::getConnection();
+			$redis->zIncrBy($clickskey, 1, $itemid);
+			$redis->expire($clickskey, 43200);
+		}
 	}
 
 	/* This is the handler method for error messages from the contest server. Implement your error handling code here.
@@ -263,6 +267,7 @@ class ContestHandlerRedis implements ContestHandler {
 			foreach ($invalid_items as $invalid) {
 				$redis->sAdd($blacklist_key, $invalid);
 			}
+			$redis->expire($blacklist_key, 43200);
 		}
 		throw new ContestException($error);
 	}
