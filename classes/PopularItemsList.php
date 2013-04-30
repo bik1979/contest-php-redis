@@ -7,7 +7,7 @@
  * Time: 11:14
  * To change this template use File | Settings | File Templates.
  */
-class ItemSortedList {
+class PopularItemsList {
 	/**
 	 * @var int How big do we allow the list to get
 	 */
@@ -26,7 +26,7 @@ class ItemSortedList {
 	 */
 	protected $slot_size = 60;
 
-	protected $limit = 200;
+	protected $limit = 250;
 
 	/**
 	 * memory key used for querying this list
@@ -34,7 +34,7 @@ class ItemSortedList {
 	 */
 	protected $memkey = null;
 
-	const KEY = 'is:%s';
+	const KEY = 'pi:%s';
 
 
 	/**
@@ -69,7 +69,8 @@ class ItemSortedList {
 				$sum_slot_key = $this->memkey . ':t';
 				$last_slot = ($slot_id - $this->max_slots);
 				$last_slot_key = $this->memkey . ':' . $last_slot;
-				$redis->zUnion($sum_slot_key, array($sum_slot_key, $last_slot_key), array(0.75, 1));
+				//decay 66% cumulated total before adding last slot
+				$redis->zUnion($sum_slot_key, array($sum_slot_key, $last_slot_key), array(0.666, 1));
 				$redis->zremrangebyrank($sum_slot_key, 0, -(3 * $this->limit + 1));
 				$redis->expire($sum_slot_key, $this->max_slots * $this->slot_size * 60 * 3); //hard ttl a bit longer
 
@@ -103,7 +104,7 @@ class ItemSortedList {
 			$slot_keys[] = $this->memkey . ':t';
 			$weights[] = $sum_weight;
 		}
-		$tmp_key = $this->memkey . ':tmp:' . mt_rand(0,9999);
+		$tmp_key = $this->memkey . ':tmp:' . mt_rand(0, 9999);
 		$redis->zUnion($tmp_key, $slot_keys, $weights);
 		$list = $redis->zRevRange($tmp_key, 0, $limit - 1);
 		$redis->del($tmp_key);

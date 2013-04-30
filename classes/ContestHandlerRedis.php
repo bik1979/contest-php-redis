@@ -30,11 +30,11 @@ class ContestHandlerRedis implements ContestHandler {
 	 */
 	public function handleImpression(ContestImpression $impression) {
 		$itemid = isset($impression->item->id) ? $impression->item->id : 0;
-		$recommendable = isset($impression->item->recommendable) ? $impression->item->recommendable : null;
+		$recommendable = isset($impression->item->recommendable) ? $impression->item->recommendable : true;
 		$userid = isset($impression->client->id) ? $impression->client->id : 0;
 		$domainid = $impression->domain->id;
 
-		$itemPublisherList = new ItemSortedList($domainid);
+		$itemPublisherList = new PopularItemsList($domainid);
 
 		$userHistoryList = null;
 		if (!empty($userid)) {
@@ -43,10 +43,8 @@ class ContestHandlerRedis implements ContestHandler {
 
 		// check whether a recommendation is expected. if the flag is set to false, the current message is just a training message.
 		if ($impression->recommend) {
-			$candidates_list = $this->recommend($itemid, $domainid, $userid, 25);
-			// $candidates_list = $this->recommend(0, $domainid, 0, 25);
-//			$item_count = count($candidates_list);
-//			file_put_contents('plista.log', "\n" . date('c') . " recommend $userid $itemid $domainid: $item_count  items  \n", FILE_APPEND);
+//			$candidates_list = $this->recommend($itemid, $domainid, $userid, 25);
+			$candidates_list = $this->recommend(0, $domainid, 0, 25);
 
 			//don't return current item
 			$has_current_item = array_search($itemid, $candidates_list);
@@ -109,10 +107,10 @@ class ContestHandlerRedis implements ContestHandler {
 			// post the result back to the contest server
 			$result->postBack();
 		}
-		if ($recommendable === null && $domainid == 1677 && $itemid > 0) {
-			file_put_contents('plista.log', "\n" . date('c') . " invalid item? recommendable not set? \n" . $impression . "\n", FILE_APPEND);
-		}
-		if (( ($recommendable === null && $domainid != 1677) || $recommendable === true) && $itemid > 0) {
+//		if ($recommendable === null && $domainid == 1677 && $itemid > 0) {
+//			file_put_contents('plista.log', "\n" . date('c') . " invalid item? recommendable not set? \n" . $impression . "\n", FILE_APPEND);
+//		}
+		if ($recommendable && $itemid > 0) {
 			$itemPublisherList->push($itemid);
 			if ($userHistoryList != null) {
 				$size = $userHistoryList->push($itemid);
@@ -125,8 +123,8 @@ class ContestHandlerRedis implements ContestHandler {
 				//if there's enough new data, try to find similar items
 				if (($size % 50) == 0) {
 					file_put_contents('plista.log', "\n" . date('c') . " item $itemid: history size:$size \n", FILE_APPEND);
-					$users_list = $itemHistory->get(200);
-					$this->findSimilarItems($itemid, $users_list, $domainid);
+//					$users_list = $itemHistory->get(200);
+//					$this->findSimilarItems($itemid, $users_list, $domainid);
 				}
 			}
 		}
@@ -141,9 +139,9 @@ class ContestHandlerRedis implements ContestHandler {
 	 */
 	protected function recommend($itemid, $domainid, $userid, $limit) {
 		//list of most popular items
-		$itemPublisherList = new ItemSortedList($domainid);
+		$itemPublisherList = new PopularItemsList($domainid);
 		$popular_items = $itemPublisherList->get($limit);
-		if (($itemid == 0 && $userid == 0)){ // || $domainid == 1677) {
+		if (($itemid == 0 && $userid == 0)) { // || $domainid == 1677) {
 			$item_count = count($popular_items);
 			file_put_contents('plista.log', "\n" . date('c') . " 0. recommend $itemid $domainid $userid: $item_count popular items found \n", FILE_APPEND);
 			return $popular_items;
@@ -259,7 +257,7 @@ class ContestHandlerRedis implements ContestHandler {
 			$invalid_items = explode(',', $matches[1]);
 			$blacklist_key = 'bl';
 			$redis = RedisHandler::getConnection();
-			foreach($invalid_items as $invalid) {
+			foreach ($invalid_items as $invalid) {
 				$redis->sAdd($blacklist_key, $invalid);
 			}
 		}
