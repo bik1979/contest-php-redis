@@ -103,8 +103,8 @@ class ContestImpression extends ContestMessage {
 			'domain' => $this->domain->id,
 			'recommend' => isset($this->recommend)  ? (int)$this->recommend : 'null',
 			'recommendable' => ($this->item == null || !isset($this->item->recommendable) || $this->item->recommendable === null)? 'null' : (int)$this->item->recommendable,
-			'item' => ($this->item == null ? 'null' : $this->item->id),
-			'category' => ($this->category == null ? 'null' : $this->category->id),
+			'item' => ($this->item == null ? 'null' : (int)$this->item->id),
+			'category' => ($this->category == null ? 'null' : (int)$this->category->id),
 			'timeout' => $this->timeout,
 			'limit' => $this->limit,
 		) + parent::__toArray();

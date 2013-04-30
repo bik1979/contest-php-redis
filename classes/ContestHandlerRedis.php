@@ -46,7 +46,7 @@ class ContestHandlerRedis implements ContestHandler {
 //			$candidates_list = $this->recommend($itemid, $domainid, $userid, 25);
 			$candidates_list = $this->recommend(0, $domainid, 0, 25);
 			shuffle($candidates_list);
-			//don't return current item
+			//don't return previously seen items
 			$has_current_item = array_search($itemid, $candidates_list);
 			if ($has_current_item !== false) {
 				unset($candidates_list[$has_current_item]);
@@ -55,6 +55,7 @@ class ContestHandlerRedis implements ContestHandler {
 			if ($userHistoryList != null) {
 				$items_seen = $userHistoryList->get(10);
 			}
+			$items_seen[] = $itemid;
 
 			$redis = RedisHandler::getConnection();
 			$blacklist = $redis->sMembers('bl');
@@ -116,7 +117,7 @@ class ContestHandlerRedis implements ContestHandler {
 			$itemPublisherList->push($itemid);
 			if ($userHistoryList != null) {
 				$size = $userHistoryList->push($itemid);
-				if ($size > 25) {
+				if (($size % 10) == 0) {
 					file_put_contents('plista.log', "\n" . date('c') . " user $userid - $domainid:  history size:$size \n", FILE_APPEND);
 				}
 				//if we have userid, push it to the item history

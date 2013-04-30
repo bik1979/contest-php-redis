@@ -25,7 +25,7 @@ try {
 	}
 
 	// log the message
-    //file_put_contents('plista.log', date('c') . " Message: $msg\n", FILE_APPEND);
+    file_put_contents('plista.log', date('c') . " Message: $msg\n", FILE_APPEND);
 
 	if ($msg instanceof ContestImpression) {
 		// call the handler method, which is also responsible for posting the data back to the contest server
