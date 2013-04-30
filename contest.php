@@ -25,7 +25,7 @@ try {
 	}
 
 	// log the message
-    file_put_contents('plista.log', date('c') . " Message: $msg\n", FILE_APPEND);
+	//file_put_contents('plista.log', date('c') . " Message: $msg\n", FILE_APPEND);
 
 	if ($msg instanceof ContestImpression) {
 		// call the handler method, which is also responsible for posting the data back to the contest server
@@ -44,6 +44,6 @@ try {
 	// we forward every error we catch back to the server
 	$e->getError()->postBack();
 	// and also log it
-        file_put_contents('plista.log', date('c') . " Message: $msg\n", FILE_APPEND);
-	file_put_contents('plista.log', date('c') . " Error: $e\n", FILE_APPEND);
+        file_put_contents('error.log', date('c') . " Message: $msg\n", FILE_APPEND);
+	file_put_contents('error.log', date('c') . " Error: $e\n\n", FILE_APPEND);
 }
