@@ -37,69 +37,104 @@ class ContestHandlerRedis implements ContestHandler {
 		$itemPublisherList = new PopularItemsList($domainid);
 
 		$userHistoryList = null;
+		$userHistorySeen = null;
 		if (!empty($userid)) {
 			$userHistoryList = new UserHistory($domainid, $userid);
+			$userHistorySeen = new UserHistorySeen($domainid, $userid);
 		}
 
 		// check whether a recommendation is expected. if the flag is set to false, the current message is just a training message.
 		if ($impression->recommend) {
 //			$candidates_list = $this->recommend($itemid, $domainid, $userid, 25);
-			$candidates_list = $this->recommend(0, $domainid, 0, 25);
-			shuffle($candidates_list);
+			$candidates_list = $this->recommend(0, $domainid, 0, 60);
+//			shuffle($candidates_list);
 			//don't return previously seen items
 			$has_current_item = array_search($itemid, $candidates_list);
 			if ($has_current_item !== false) {
 				unset($candidates_list[$has_current_item]);
 			}
-			$items_seen = array();
+			$items_read = array();
 			if ($userHistoryList != null) {
-				$items_seen = $userHistoryList->get(10);
+				$items_read = $userHistoryList->get(25);
 			}
-			$items_seen[] = $itemid;
+			$items_seen = array();
+			if ($userHistorySeen != null) {
+				$items_seen = $userHistorySeen->get(25);
+			}
+			$items_read[] = $itemid;
 
 			$redis = RedisHandler::getConnection();
 			$blacklist = $redis->sMembers('bl');
 
 			$result_data = array();
-			$skipped = array();
+			$skip_seen = array();
+			$skip_read = array();
 			$item_count = 0;
-			foreach ($candidates_list as $id) {
+			$rank = array();
+			$clickskey = 'clicks:' . $domainid;
+			$redis = RedisHandler::getConnection();
+			foreach ($candidates_list as $j => $id) {
 				if (in_array($id, $blacklist)) {
-					file_put_contents('plista.log', "\n" . date('c') . "  $id: invalid item filtered \n", FILE_APPEND);
+//					file_put_contents('plista.log', "\n" . date('c') . "  $id: invalid item filtered \n", FILE_APPEND);
 					continue;
 				}
-				$item_in_history = in_array($id, $items_seen);
+				$score = pow(1.01, -($j + 1));
+				$is_read = in_array($id, $items_read);
 				//skip items already seen recently by the user
-				if ($item_in_history !== false) {
-					$skipped[] = $id;
-					file_put_contents('plista.log', "\n" . date('c') . "  $id: skip item already seen for user $userid \n", FILE_APPEND);
+				if ($is_read !== false) {
+					$skip_read[] = $id;
+					$rank[$id] = 0.01 * $score;
+//					file_put_contents('plista.log', "\n" . date('c') . "  $id: skip item already seen for user $userid \n", FILE_APPEND);
 					continue;
 				}
+				$is_seen = in_array($id, $items_seen);
+				//skip items already seen recently by the user
+				if ($is_seen !== false) {
+					$skip_seen[] = $id;
+					$rank[$id] = 0.1 * $score;
+//					file_put_contents('plista.log', "\n" . date('c') . "  $id: skip item already seen for user $userid \n", FILE_APPEND);
+					continue;
+				}
+				$clicks = $redis->zScore($clickskey, $id);
+				if ($clicks > 0) {
+					$score += 1;
+				}
+				$rank[$id] = $score;
+//				$data_object = new stdClass;
+//				$data_object->id = $id;
+//				$result_data[] = $data_object;
+//				$userHistorySeen->push($id);
+//				$item_count++;
+//				if ($item_count == $impression->limit) {
+//					break;
+//				}
+			}
+
+			if (count($result_data) < $impression->limit) {
+				throw new ContestException('not enough data', 500);
+			}
+			arsort($rank);
+			foreach ($rank as $id => $val) {
 				$data_object = new stdClass;
 				$data_object->id = $id;
 				$result_data[] = $data_object;
+				$userHistorySeen->push($id);
 				$item_count++;
 				if ($item_count == $impression->limit) {
 					break;
 				}
 			}
 
-			if (count($result_data) < $impression->limit) {
-				if ((count($skipped) + count($result_data)) < $impression->limit) {
-					throw new ContestException('not enough data', 500);
-				}
-				file_put_contents('plista.log', "\n" . date('c') . " recommend $userid $itemid $domainid: recommending already seen items!!  \n", FILE_APPEND);
-				//add skipped items as last option
-				foreach ($skipped as $id) {
-					$data_object = new stdClass;
-					$data_object->id = $id;
-					$result_data[] = $data_object;
-					$item_count++;
-					if ($item_count == $impression->limit) {
-						break;
-					}
-				}
-			}
+//			if (count($result_data) < $impression->limit) {
+//				if ((count($skip_seen) + count($skip_read) + count($result_data)) < $impression->limit) {
+//					throw new ContestException('not enough data', 500);
+//				}
+//				file_put_contents('plista.log', "\n" . date('c') . " recommend $userid $itemid $domainid: recommending already seen items!!  \n", FILE_APPEND);
+//				//add skipped items as last option, then read items
+//				$skipped = array_merge($skip_seen, $skip_read);
+//
+//			}
+
 
 			// construct a result message
 			$result_object = new stdClass;
@@ -245,12 +280,16 @@ class ContestHandlerRedis implements ContestHandler {
 //			// add id to data file
 //		}
 //
-		if (!empty($feedback->target)) {
+		if (isset($feedback->target)) {
 			$itemid = $feedback->target->id;
 			$clickskey = 'clicks:' . $feedback->domain->id;
 			$redis = RedisHandler::getConnection();
 			$redis->zIncrBy($clickskey, 1, $itemid);
-			$redis->expire($clickskey, 43200);
+			$redis->expire($clickskey, 86400);
+			if ($redis->zCard($clickskey) > 500) {
+				$redis->zRemRangeByRank($clickskey, 0, -500);
+			}
+
 		}
 	}
 

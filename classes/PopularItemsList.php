@@ -11,14 +11,14 @@ class PopularItemsList {
 	/**
 	 * @var int How big do we allow the list to get
 	 */
-	protected $number_of_items = 10;
+	protected $number_of_items = 12;
 
 	/**
-	 * @var int how many seconds should the list live
+	 * @var int how many seconds should the list live, since the last update
 	 */
 	protected $ttl = 86400;
 
-	protected $max_slots = 3;
+	protected $max_slots = 4;
 
 	/**
 	 * slot size in minutes
@@ -55,6 +55,7 @@ class PopularItemsList {
 
 		// register impression
 		$item_count = $redis->zincrby($slot_key, 1, $id);
+		//TODO check atomically if its the first item now there could be dirty reads
 		$slot_items_count = $redis->zcard($slot_key);
 		if ($slot_items_count == 1 && $item_count == 1) {
 			//this is first item inserted in this slot
@@ -105,7 +106,7 @@ class PopularItemsList {
 			$slot_keys[] = $this->memkey . ':t';
 			$weights[] = $sum_weight;
 		}
-		$tmp_key = $this->memkey . ':tmp:' . mt_rand(0, 9999);
+		$tmp_key = $this->memkey . ':tmp:' . mt_rand(0, 99999);
 		$redis->zUnion($tmp_key, $slot_keys, $weights);
 		$list = $redis->zRevRange($tmp_key, 0, $limit - 1);
 		$redis->del($tmp_key);

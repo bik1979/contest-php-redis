@@ -82,9 +82,9 @@ class ContestFeedback extends ContestMessage {
 		return array(
 			'client' => $this->client->id,
 			'domain' => $this->domain->id,
-			'source' =>  ($this->source == null) ? 'null' : (int)$this->source->id,
-			'target' => ($this->target == null) ? 'null' : (int)$this->target->id,
-			'category' => ($this->category == null) ? 'null' : (int)$this->category->id,
+			'source' =>  (int)$this->source->id,
+			'target' =>  (int)$this->target->id,
+			'category' => (int)$this->category->id,
 		) + parent::__toArray();
 	}
 
