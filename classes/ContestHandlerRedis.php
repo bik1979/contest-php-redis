@@ -65,24 +65,29 @@ class ContestHandlerRedis implements ContestHandler {
 
 			$redis = RedisHandler::getConnection();
 			$blacklist = $redis->sMembers('bl');
-
+			$clickskey = 'clicks:' . $domainid;
+			$clicklist = $redis->zRevRange($clickskey, 0, 500);
 			$result_data = array();
-			$skip_seen = array();
-			$skip_read = array();
+//			$skip_seen = array();
+//			$skip_read = array();
 			$item_count = 0;
 			$rank = array();
-			$clickskey = 'clicks:' . $domainid;
-			$redis = RedisHandler::getConnection();
+
 			foreach ($candidates_list as $j => $id) {
 				if (in_array($id, $blacklist)) {
 //					file_put_contents('plista.log', "\n" . date('c') . "  $id: invalid item filtered \n", FILE_APPEND);
 					continue;
 				}
 				$score = pow(1.01, -($j + 1));
+				//$clicks = $redis->zScore($clickskey, $id);
+				if (in_array($id, $clicklist)) {
+					$score += 0.5;
+				}
+
 				$is_read = in_array($id, $items_read);
 				//skip items already seen recently by the user
 				if ($is_read !== false) {
-					$skip_read[] = $id;
+//					$skip_read[] = $id;
 					$rank[$id] = 0.01 * $score;
 //					file_put_contents('plista.log', "\n" . date('c') . "  $id: skip item already seen for user $userid \n", FILE_APPEND);
 					continue;
@@ -90,15 +95,12 @@ class ContestHandlerRedis implements ContestHandler {
 				$is_seen = in_array($id, $items_seen);
 				//skip items already seen recently by the user
 				if ($is_seen !== false) {
-					$skip_seen[] = $id;
+//					$skip_seen[] = $id;
 					$rank[$id] = 0.1 * $score;
 //					file_put_contents('plista.log', "\n" . date('c') . "  $id: skip item already seen for user $userid \n", FILE_APPEND);
 					continue;
 				}
-				$clicks = $redis->zScore($clickskey, $id);
-				if ($clicks > 0) {
-					$score += 1;
-				}
+
 				$rank[$id] = $score;
 //				$data_object = new stdClass;
 //				$data_object->id = $id;
@@ -110,7 +112,7 @@ class ContestHandlerRedis implements ContestHandler {
 //				}
 			}
 
-			if (count($result_data) < $impression->limit) {
+			if (count($rank) < $impression->limit) {
 				throw new ContestException('not enough data', 500);
 			}
 			arsort($rank);
