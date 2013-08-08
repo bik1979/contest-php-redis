@@ -93,7 +93,7 @@ class PopularItemsList {
 	public function get($limit = 100, array $weights = array(), $sum_weight = 0.05) {
 		$redis = RedisHandler::getConnection();
 		if (empty($weights)) {
-			$weights = array(1, 0.75, 0.25);
+			$weights = array(1, 0.75, 0.25, 0.15);
 		}
 		$current_slot = ceil(time() / $this->slot_size / 60);
 //        $start_slot = ($current_slot -  $this->max_slots );
