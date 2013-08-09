@@ -53,69 +53,16 @@ class ContestHandlerRedis implements ContestHandler {
 			if ($has_current_item !== false) {
 				unset($candidates_list[$has_current_item]);
 			}
-			$items_read = array();
-			if ($userHistoryList != null) {
-				$items_read = $userHistoryList->get(25);
-			}
-			$items_seen = array();
-			if ($userHistorySeen != null) {
-				$items_seen = $userHistorySeen->get(25);
-			}
-			$items_read[] = $itemid;
 
-			$redis = RedisHandler::getConnection();
-			$blacklist = $redis->sMembers('bl');
-			$clickskey = 'clicks:' . $domainid;
-			$clicklist = $redis->zRevRange($clickskey, 0, 500);
-			$result_data = array();
-//			$skip_seen = array();
-//			$skip_read = array();
-			$item_count = 0;
-			$rank = array();
-
-			foreach ($candidates_list as $j => $id) {
-				if (in_array($id, $blacklist)) {
-//					file_put_contents('plista.log', "\n" . date('c') . "  $id: invalid item filtered \n", FILE_APPEND);
-					continue;
-				}
-				$score = pow(1.01, -($j + 1));
-				//$clicks = $redis->zScore($clickskey, $id);
-				if (in_array($id, $clicklist)) {
-					$score += 0.5;
-				}
-
-				$is_read = in_array($id, $items_read);
-				//skip items already seen recently by the user
-				if ($is_read !== false) {
-//					$skip_read[] = $id;
-					$rank[$id] = 0.01 * $score;
-//					file_put_contents('plista.log', "\n" . date('c') . "  $id: skip item already seen for user $userid \n", FILE_APPEND);
-					continue;
-				}
-				$is_seen = in_array($id, $items_seen);
-				//skip items already seen recently by the user
-				if ($is_seen !== false) {
-//					$skip_seen[] = $id;
-					$rank[$id] = 0.1 * $score;
-//					file_put_contents('plista.log', "\n" . date('c') . "  $id: skip item already seen for user $userid \n", FILE_APPEND);
-					continue;
-				}
-
-				$rank[$id] = $score;
-//				$data_object = new stdClass;
-//				$data_object->id = $id;
-//				$result_data[] = $data_object;
-//				$userHistorySeen->push($id);
-//				$item_count++;
-//				if ($item_count == $impression->limit) {
-//					break;
-//				}
-			}
-
+			$rank = $this->rescore($candidates_list, $userid, $domainid);
 			if (count($rank) < $impression->limit) {
 				throw new ContestException('not enough data? ' . count($rank), 500);
 			}
 			arsort($rank);
+
+			$item_count = 0;
+			$result_data = array();
+			$userHistorySeen = new UserHistorySeen($domainid, $userid);
 			foreach ($rank as $id => $val) {
 				$data_object = new stdClass;
 				$data_object->id = $id;
@@ -126,18 +73,7 @@ class ContestHandlerRedis implements ContestHandler {
 					break;
 				}
 			}
-
-//			if (count($result_data) < $impression->limit) {
-//				if ((count($skip_seen) + count($skip_read) + count($result_data)) < $impression->limit) {
-//					throw new ContestException('not enough data', 500);
-//				}
-//				file_put_contents('plista.log', "\n" . date('c') . " recommend $userid $itemid $domainid: recommending already seen items!!  \n", FILE_APPEND);
-//				//add skipped items as last option, then read items
-//				$skipped = array_merge($skip_seen, $skip_read);
-//
-//			}
-
-
+			file_put_contents('plista.log', "\n" . date('c') . " rank: " . print_r($rank, true) . "\n", FILE_APPEND);
 			// construct a result message
 			$result_object = new stdClass;
 			$result_object->items = $result_data;
@@ -147,11 +83,10 @@ class ContestHandlerRedis implements ContestHandler {
 			// post the result back to the contest server
 			$result->postBack();
 		}
-//		if ($recommendable === null && $domainid == 1677 && $itemid > 0) {
-//			file_put_contents('plista.log', "\n" . date('c') . " invalid item? recommendable not set? \n" . $impression . "\n", FILE_APPEND);
-//		}
+
 		if ($recommendable && $itemid > 0) {
 			$itemPublisherList->push($itemid);
+			$userHistoryList = new UserHistory($domainid, $userid);
 			if ($userHistoryList != null) {
 				$size = $userHistoryList->push($itemid);
 				if (($size % 10) == 0) {
@@ -168,6 +103,66 @@ class ContestHandlerRedis implements ContestHandler {
 				}
 			}
 		}
+	}
+
+	/**
+	 * @param $candidates
+	 * @param $userid
+	 * @param $domainid
+	 */
+	protected function rescore($candidates, $userid, $domainid) {
+		$userHistoryList = null;
+		$userHistorySeen = null;
+		if (!empty($userid)) {
+			$userHistoryList = new UserHistory($domainid, $userid);
+			$userHistorySeen = new UserHistorySeen($domainid, $userid);
+		}
+
+		$items_read = array();
+		if ($userHistoryList != null) {
+			$items_read = $userHistoryList->get(25);
+		}
+		$items_seen = array();
+		if ($userHistorySeen != null) {
+			$items_seen = $userHistorySeen->get(25);
+		}
+
+		$redis = RedisHandler::getConnection();
+		$blacklist = $redis->sMembers('bl');
+		$clickskey = 'clicks:' . $domainid;
+		$clicklist = $redis->zRevRange($clickskey, 0, 500);
+		$rank = array();
+
+		foreach ($candidates as $j => $id) {
+			if (in_array($id, $blacklist)) {
+				file_put_contents('plista.log', "\n" . date('c') . "rescore  $id: invalid item filtered \n", FILE_APPEND);
+				continue;
+			}
+			$score = pow(1.01, -($j + 1));
+			//$clicks = $redis->zScore($clickskey, $id);
+			if (in_array($id, $clicklist)) {
+				file_put_contents('plista.log', "\n" . date('c') . "rescore  $id: +0.5 (click) \n", FILE_APPEND);
+				$score += 0.5;
+			}
+
+			$is_read = in_array($id, $items_read);
+			//skip items already seen recently by the user
+			if ($is_read !== false) {
+				file_put_contents('plista.log', "\n" . date('c') . "rescore  $id: *0.01 (item read) \n", FILE_APPEND);
+				$rank[$id] = 0.01 * $score;
+				continue;
+			}
+			$is_seen = in_array($id, $items_seen);
+			//skip items already seen recently by the user
+			if ($is_seen !== false) {
+				$rank[$id] = 0.1 * $score;
+				file_put_contents('plista.log', "\n" . date('c') . "rescore  $id: *0.1 (item seen) \n", FILE_APPEND);
+				continue;
+			}
+
+			$rank[$id] = $score;
+		}
+		return $rank;
 	}
 
 	/**

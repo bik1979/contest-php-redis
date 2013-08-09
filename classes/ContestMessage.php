@@ -24,9 +24,9 @@ class ContestMessage {
 	public function __toArray() {
 		return array(
 			'timestamp' => intval($this->timestamp),
-			'team' => (isset($this->team) ? $this->team->id : null),
-			'type' => strtolower(substr(get_class($this), 7)),
-			'version' => self::VERSION,
+			'team'      => (isset($this->team) ? $this->team->id : null),
+			'type'      => strtolower(substr(get_class($this), 7)),
+			'version'   => self::VERSION,
 		);
 	}
 
@@ -142,6 +142,7 @@ class ContestMessage {
 
 		echo plista_json_encode($this) . PHP_EOL;
 		flush();
+		file_put_contents('plista.log', "\n" . date('c') . " " . plista_json_encode($this) . "\n", FILE_APPEND);
 	}
 
 	public function __get($name) {
