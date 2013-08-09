@@ -113,7 +113,7 @@ class ContestHandlerRedis implements ContestHandler {
 			}
 
 			if (count($rank) < $impression->limit) {
-				throw new ContestException('not enough data', 500);
+				throw new ContestException('not enough data? ' . count($rank), 500);
 			}
 			arsort($rank);
 			foreach ($rank as $id => $val) {
